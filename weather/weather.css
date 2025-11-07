@@ -44,8 +44,10 @@ body{
     justify-content: space-between;
     align-items: center;
 }
-.weather > div:first-child { height: 3rem; }
-.weather > div:last-child { height: 17rem;}
+.weather > div:first-child { height: 3rem; } /* 오늘의 날씨 */
+.weather > div:first-child > div:last-child{ cursor: pointer; } /* 주간 날씨 */
+/* ===== 날씨 상세내역 ===== */
+.weather > div:last-child { height: 17rem;} 
 .weather > div:last-child > .weather-icon {
     width: 15rem;
     background-color: white;

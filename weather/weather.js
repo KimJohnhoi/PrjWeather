@@ -1,10 +1,6 @@
-//서비스키: 일반인증키(Encoding) XP4udjk2hNcD5MX5lwoGwDiPvW71TbPg5Nlb%2Bqfw7TP59RKXJ1wYpWWi%2FQbOgUATxm8Umgnpt2M1qyxfZgt5jA%3D%3D
-//서비스키: 일반인증키(Decoding) XP4udjk2hNcD5MX5lwoGwDiPvW71TbPg5Nlb+qfw7TP59RKXJ1wYpWWi/QbOgUATxm8Umgnpt2M1qyxfZgt5jA==
 let weather;
 
 weather = {
-    url: 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst',                      // url(단기예보조회URL)
-    mykey: 'XP4udjk2hNcD5MX5lwoGwDiPvW71TbPg5Nlb+qfw7TP59RKXJ1wYpWWi/QbOgUATxm8Umgnpt2M1qyxfZgt5jA==',  // servicekey
     pageNo: "1", 	        // 페이지 번호
     numOfRows: "12",        // 한 페이지 결과 수
     base_date: "20251105",  // 발표일자
@@ -31,14 +27,17 @@ weather = {
         let current_time = new Date();
         let diffTime = 0;
         let month = public_time.getMonth();
+        let day = public_time.getDate();
 
         // 가장 최근의 base_date, base_time 구하기
         public_time.setHours(public_time.getHours() - 2);
         public_time.setMinutes(public_time.getMinutes() - 10);
         month = `${public_time.getMonth() + 1}`.padStart(2, "0");
+        day = `${public_time.getDate()}`.padStart(2, '0');
+
         public_time.setHours(parseInt(public_time.getHours() / 3) * 3 + 2);
         public_time.setMinutes(10);
-        weather.base_date = `${public_time.getFullYear()}${month}${String(public_time.getDate()).padStart(2, '0')}`;
+        weather.base_date = `${public_time.getFullYear()}${month}${day}`;
         weather.base_time = public_time.getHours() * 100;
         weather.base_time = weather.base_time.toString().padStart(4, "0");
         //console.log("public_time:" + public_time);
@@ -50,14 +49,16 @@ weather = {
         else if (diffTime < 110) weather.pageNo = 2;  // 00~0:59
         else if (diffTime < 170) weather.pageNo = 3;  // 1:00~1:59
         else weather.pageNo = 4;
-        console.log("pageNo = " + weather.pageNo);
-        console.log("기준 일자및시간: ", weather.base_date, weather.base_time);
+        //console.log("pageNo = " + weather.pageNo);
+        //console.log("기준 일자및시간: ", weather.base_date, weather.base_time);
     },
     getWeather:() => {
-        let xhr, params;
+        let xhr, params, url, mykey;
         xhr = new XMLHttpRequest();
+        url = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';                              // url(단기예보조회URL)
+        serviceKey = 'XP4udjk2hNcD5MX5lwoGwDiPvW71TbPg5Nlb+qfw7TP59RKXJ1wYpWWi/QbOgUATxm8Umgnpt2M1qyxfZgt5jA==';     // servicekey(단기)
 
-        params = '?'  + encodeURIComponent('serviceKey') + '='+ encodeURIComponent(weather.mykey);
+        params = '?'  + encodeURIComponent('serviceKey') + '='+ encodeURIComponent(serviceKey);
         params += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent(weather.pageNo);
         params += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent(weather.numOfRows);
         params += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('JSON');
@@ -66,14 +67,14 @@ weather = {
         params += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(weather.nx);
         params += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(weather.ny);
 
-        fetch(weather.url + params, {
+        fetch(url + params, {
             method: 'GET'
         })
         .catch(error => console.error('Error:', error))
         .then(response => response.json())
         .then(data => { 
             if (parseInt(data.response.header.resultCode) > 0) {
-                console.error(`ERROR-CODE: ${data.response.header.resultMsg} ( ${data.response.header.resultCode} )`);
+                console.error(`ERROR CODE: ${data.response.header.resultMsg} ( ${data.response.header.resultCode} )`);
             }
             //console.log(data);
             let result = data.response.body.items.item;
@@ -87,26 +88,28 @@ weather = {
         /* 강수형태 이미지 설정 */
         let icon = null;
         switch(x){
-            case "1": icon = "rainy-5"; break;          // 비
-            case "2": icon = "rainy-7"; break;          // 비/눈(진눈깨비 등)
-            case "3": icon = "snowy-6"; break;          // 눈
-            case "4": icon = "rainy-6"; break;          // 소나기(단기예보에서 사용)
-            case "5": icon = "rainy-4"; break;          // 빗방울(초단기예보에서 사용) - 강수량적을때
-            case "6":                                   // 빗방울/눈날림(초단기예보에서 사용) - 강수량적을때
-            case "7": icon = "snowy-4"; break;          // 눈날림(초단기예보에서 사용)
-            default:  icon = "day";                     // 없음(강수 없음)
+            case "1": icon = "rainy"; break;                // 비
+            case "2": icon = "rainy-snowy"; break;          // 비/눈(진눈깨비 등)
+            case "3": icon = "snowy"; break;                // 눈
+            case "4": icon = "shower"; break;               // 소나기(단기예보에서 사용)
+            case "5": icon = "raindrop"; break;             // 빗방울(초단기예보에서 사용) - 강수량적을때
+            case "6":                                       // 빗방울/눈날림(초단기예보에서 사용) - 강수량적을때
+            case "7": icon = "drifting-snow"; break;        // 눈날림(초단기예보에서 사용)
+            default:  icon = "day";                         // 없음(강수 없음)
         }
+
         return icon;
     }, // End of ptyIcon()
     skyIcon: x => {
         /* 하늘상태 이미지 설정 */
         let icon = null;
         switch (x) {
-            case "1": base_time > 1800 ? icon = "night" : icon = "day"; break                      // 맑음
-            case "3": base_time > 1800 ? icon = "cloudy-night-3" : icon = "cloudy-day-1"; break;   // 구름많음
-            case "4": icon = "cloudy"; break;                                                      // 흐림
-            default:  icon = "day";                                                                // 기본값
+            case "1": weather.base_time > 1800 ? icon = "night" : icon = "day"; break                      // 맑음
+            case "3": weather.base_time > 1800 ? icon = "cloudy-night" : icon = "cloudy-day"; break;       // 구름많음
+            case "4": icon = "cloudy"; break;                                                              // 흐림
+            default:  icon = "day";                                                                        // 기본값
         }
+
         return icon;
     }, // End of skyIcon()
     draw:() => {
@@ -135,6 +138,29 @@ weather = {
             el.src = imgsrc;
         }
     }, // End of draw()
+    getWeekWeather:() => { //공공포털 오류: 데이터 못가져옴, 지점번호 자료 없음
+        let xhr, url, params, serviceKey, dt;
+        xhr = new XMLHttpRequest();
+        url = 'http://apis.data.go.kr/1360000/MidFcstInfoService/getMidFcst';                                      // url(중기예보조회URL)
+        serviceKey = 'XP4udjk2hNcD5MX5lwoGwDiPvW71TbPg5Nlb+qfw7TP59RKXJ1wYpWWi/QbOgUATxm8Umgnpt2M1qyxfZgt5jA==';   // servicekey(중기)
+        weather.base_time >= 1800 ? dt = "1800" : dt = "0600";
+
+        params = '?' + encodeURIComponent('serviceKey') + '='+encodeURIComponent(serviceKey);                      // 서비스키
+        params += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');                              // 페이지번호
+        params += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('10');                          // 한 페이지 결과 수
+        params += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('JSON');                         // 응답자료형식
+        params += '&' + encodeURIComponent('stnId') + '=' + encodeURIComponent('108');                             // 지점번호: 108 전국, 109 서울, 인천, 경기도 등
+        params += '&' + encodeURIComponent('tmFc') + '=' + encodeURIComponent(`${weather.base_date}${dt}`);        // 발표시각, 입력포맷 YYYYMMDD0600 (1800) 
+        
+        fetch(url + params, {
+            method: 'GET'
+        })
+        .catch(error => console.error('Error:', error))
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+        })
+    }, // End of getWeekWeather()
 }
 
 var options = {
@@ -163,4 +189,11 @@ init = () => {
     navigator.geolocation.getCurrentPosition(success, error, options);
     weather.getDate();
     weather.getWeather();
+    
+    /*let onClickWeek = () => {
+        weather.getWeekWeather();
+    }
+
+    let el = document.getElementsByClassName("weather")[0].children[0].children[1];
+    el.addEventListener('click', onClickWeek);*/
 }
